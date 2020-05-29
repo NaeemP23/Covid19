@@ -9,9 +9,17 @@
     <h1>
       Covid19 PPE Shortages
     </h1>
-    <p>
-      <b>States:</b> {{ state_name }}
-    </p>
+    <!-- <p>
+      <b>Results:</b> {{ results }}
+    </p> -->
+    <table>
+      {% for key, value in results.items() %}
+         <tr>
+              <th> {{ key }} </th>
+              <td> {{ value }} </td>
+         </tr>
+      {% endfor %}
+    </table>
 
   </body>
 </html>

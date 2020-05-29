@@ -7,18 +7,26 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
+    states = []
+    predictions = []
+    with open('predictions.csv') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count == 0:
+                for state in row: 
+                    if state == '' or state == 'predicted_cases': 
+                        continue
+                    state = state.replace('state_', "")
+                    states.append(state)
+                line_count += 1
+            else:
+                predictions.append(row[-1])
+                line_count += 1
+    results = dict(zip(states, predictions))
+    print(results)
 
-    states = pd.read_csv('predictions.csv', nrows=0)
-    state_name = []
-    # print(states)
-
-    for row in states:
-        if row == "Unnamed: 0":
-            continue
-        row = row.replace('state_', "")
-        state_name.append(row)
-
-    return render_template("index.html", state_name=state_name)
+    return render_template("index.html", results = results)
 
 
 if __name__ == "__main__":
