@@ -4,7 +4,6 @@ import pandas as pd
 
 app = Flask(__name__)
 
-
 @app.route("/")
 def index():
     states = []
@@ -24,7 +23,6 @@ def index():
                 predictions.append(row[-1])
                 line_count += 1
     results = dict(zip(states, predictions))
-    print(results)
 
     return render_template("index.html", results = results)
 
