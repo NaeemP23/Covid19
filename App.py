@@ -8,11 +8,14 @@ app = Flask(__name__)
 @app.route("/")
 def index():
 
-    states = pd.read_csv('/Users/naeem/Desktop/Covid19/predictions.csv', nrows=0)
+    states = pd.read_csv('predictions.csv', nrows=0)
     state_name = []
-    print(states)
+    # print(states)
 
     for row in states:
+        if row == "Unnamed: 0":
+            continue
+        row = row.replace('state_', "")
         state_name.append(row)
 
     return render_template("index.html", state_name=state_name)
