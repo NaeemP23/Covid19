@@ -1,9 +1,10 @@
 import csv
 import numpy as np
-from bokeh.io import output_notebook, show, output_file, save
-from bokeh.layouts import column
+from bokeh.io import output_notebook, show, output_file, save, export_svgs, export_png
+from bokeh.layouts import column, row, gridplot
 from bokeh.plotting import figure, curdoc
 from bokeh.models import NumeralTickFormatter, Select, ColumnDataSource, CustomJS, HoverTool, FactorRange
+from bokeh.models.widgets import Paragraph, Div
 import math
 
 def make_char():
@@ -42,23 +43,23 @@ def make_char():
             else:
                 line_count += 1
 
-    resources = ['beds_total', 'beds_aval', 'ven_total','ven_aval']
+    resources = ['Total Beds', 'Available Beds', 'Total Ventilators','Available Ventilators']
 
     data_r = {'states' : state_resources,
-            'beds_total': beds_total,
-            'beds_aval': beds_aval,
-            'ven_total': ven_total,
-            'ven_aval': ven_aval
+            'Total Beds': beds_total,
+            'Available Beds': beds_aval,
+            'Total Ventilators': ven_total,
+            'Available Ventilators': ven_aval
             }
 
     # this creates [ ("Apples", "2015"), ("Apples", "2016"), ("Apples", "2017"), ("Pears", "2015), ... ]
     x_r = [ (s, r) for s in state_resources for r in resources ]
-    counts = sum(zip(data_r['beds_total'], data_r['beds_aval'], data_r['ven_total'], data_r['ven_aval']), ()) # like an hstack
+    counts = sum(zip(data_r['Total Beds'], data_r['Available Beds'], data_r['Total Ventilators'], data_r['Available Ventilators']), ()) # like an hstack
 
     source = ColumnDataSource(data = dict(states = states, predictions = predictions, all = predictions))
     source_rr = ColumnDataSource(data=dict(x_r=x_r, counts=counts, all_counts = counts))
 
-    p_rr = figure(x_range=FactorRange(*x_r), plot_height=500, plot_width = 1500, title="State Resources", toolbar_location=None, tools="")
+    p_rr = figure(x_range=FactorRange(*x_r), plot_height=500, plot_width = 1200, title="State Resources - June 10th", toolbar_location=None, tools="")
 
     p_rr.vbar(x='x_r', top='counts', width=0.9, source=source_rr)
 
@@ -68,7 +69,10 @@ def make_char():
     p_rr.xgrid.grid_line_color = None
 
 
-    p = figure(x_range = source.data['states'], plot_height = 500, plot_width = 1500, title = 'Predictions by State')
+    p_rr.add_tools(HoverTool(tooltips = [('Number of Resources', '@counts')]))
+
+
+    p = figure(x_range = source.data['states'], plot_height = 500, plot_width = 1200, title = 'Predictions by State - June 10th', toolbar_location=None, tools="")
     p.vbar(x = 'states', top = 'predictions', width = 0.5, source = source)
     p.xaxis.major_label_orientation = math.pi/2
     p.yaxis[0].formatter = NumeralTickFormatter(format = '0')
@@ -129,11 +133,29 @@ def make_char():
         source.change.emit();
     """)
 
-    menu = Select(options = source.data['states'] + ['All States'], value = 'uniform', title = 'States')
+    menu = Select(options = ['All States'] + source.data['states'], value = 'All States', title = 'Select State')
     menu.js_on_change('value', callback)
 
     output_file('Templates/bar_chart.html')
+    #output_file('bar_chart.html')
 
-    layout = column(menu, p, p_rr)
+    title = Div(text = """<h1>Prediction of Covid-19 Cases and Availability of Resources</h1>""", width=1200, height=50)
+
+    div1 = Div(text = """<h3>Overview</h3>
+        In 2020, the coronavirus became a global pandemic, affecting millions of people around the world. As a result, many hospitals have been collecting data as new patients come in to aid research into its spread and overall trajectory.  Our model takes in data from various datasets and resources and compiles it to make a prediction about the number of cases in each state for a given day, depending on outbreak data from previous days. Furthermore, visualization of hospital data for each state such as number of beds and ventilators for selected states will allow us to better predict when shortages of personal protective equipment (PPE) and resources in hospitals may occur.
+        <h3> Additional Resources</h3>
+        <a href = "https://www.cdc.gov/coronavirus/2019-ncov/covid-data/covidview/index.html" target="_blank"> CDC Website</a> with information about treatment and symptoms <br>
+        <a href = "https://covid19.healthdata.org/united-states-of-america" target="_blank"> University of Washington Model</a> with prediction on Covid-19 Cases<br>
+        <a href = "https://docs.google.com/spreadsheets/d/1ir6MK_WFQwnuboa5sKVWtliHktkKOWDw3rUH7aiYTXU/edit?usp=sharing" target="_blank"> Google Sheets</a> with more information on state resources<br>
+        """,
+        width = 300, height = 100)
+
+    side = column(menu,div1)
+
+    layout = gridplot([title, None, p, side, p_rr,None], ncols = 2)
+
     curdoc().add_root(layout)
-    save(layout, filename = 'Templates/bar_chart.html')
+    save(layout, filename = 'Templates/bar_chart.html', title = 'Covid-19 Outbreak Prediction')
+    #save(layout, filename = 'bar_chart.html', title = 'Covid-19 Outbreak Prediction')
+
+#make_char()
